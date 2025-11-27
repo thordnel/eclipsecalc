@@ -6,6 +6,7 @@
     <title>Interactive Python Terminal on GitHub Pages</title>
     
     <!-- Load modern PyScript CSS and JS files from their public CDN -->
+    <!-- These links MUST start with https:// to be treated as internet addresses -->
     <link rel="stylesheet" href="pyscript.net" />
     <script defer src="pyscript.net"></script>
 
@@ -38,6 +39,7 @@
     <!-- 
       *** CRITICAL WORKAROUND FOR GITHUB PAGES ***
       This script from unpkg.com sets Cross-Origin security headers needed for PyScript web workers.
+      This link MUST start with https://
     -->
     <script src="unpkg.com"></script>
 
