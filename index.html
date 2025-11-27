@@ -6,7 +6,7 @@
 <title>Thursday Finder</title>
 
 <link rel="stylesheet" href="https://pyscript.net/releases/2024.2.1/core.css">
-<script type="module" src="https://pyscript.net/releases/2024.2.1/core.js"></script>
+<script defer src="https://pyscript.net/releases/2024.2.1/core.js"></script>
 
 <style>
 body { font-family: serif; max-width: 720px; margin: auto; padding: 20px; }
@@ -33,8 +33,8 @@ input, button { padding: 6px; font-size: 16px; }
 
 <br><br>
 
-<button id="runButton">Find Thursdays</button>
-<button id="downloadButton">Download</button>
+<button onclick="run_calc()">Find Thursdays</button>
+<button onclick="download_results()">Download</button>
 
 <h3>Results</h3>
 <div id="output"></div>
@@ -52,8 +52,7 @@ def find_thursday_months(target_day, filter_months):
     for y in years:
         for m in months:
             try:
-                # weekday() returns 0 for Monday, 3 for Thursday
-                if datetime(y, m, target_day).weekday() == 3:
+                if datetime(y, m, target_day).weekday() == 3: # 3 is Thursday
                     if not filter_months or m in filter_months:
                         out[y].append(m)
             except:
@@ -61,7 +60,8 @@ def find_thursday_months(target_day, filter_months):
     return out
 
 def julian_to_gregorian(jy, jm, jd):
-    # Gregorian - Julian offset for the target period
+    # Gregorian calendar was 12 days ahead of Julian in 1870-1899
+    # and 13 days ahead in 1900-1923
     if 1870 <= jy <= 1899:
         offset = 12
     elif 1900 <= jy <= 1923:
@@ -85,13 +85,14 @@ def find_thursday_months_julian(target_day, filter_months):
         for m in months:
             # Convert Julian date to its equivalent Gregorian date
             gy, gm, gd = julian_to_gregorian(y, m, target_day)
+            
             if gd is None:
                 continue
             
-            # Check the weekday of the Gregorian date
+            # Check if the *Gregorian equivalent* falls on a Thursday
             if datetime(gy, gm, gd).weekday() == 3:
-                # The Julian month 'm' is what is appended to the results
                 if not filter_months or m in filter_months:
+                    # Store the result using the Julian calendar's year and month
                     out[y].append(m)
     return out
 
@@ -101,11 +102,7 @@ def compute(day, mode, filter_str):
         try:
             f = [int(x.strip()) for x in filter_str.split(",") if x.strip()]
         except:
-            return "Invalid month filter: must be comma-separated numbers (1-12)."
-
-    # Input validation
-    if not 1 <= day <= 31:
-        return "Invalid day: must be between 1 and 31."
+            return "Invalid filter."
 
     if mode == "greg":
         res = find_thursday_months(day, f)
@@ -117,81 +114,52 @@ def compute(day, mode, filter_str):
         # Get month names for display
         names = [datetime(year, m, 1).strftime("%B") for m in res[year]]
         lines.append(f"{year}: {day} {', '.join(names)}")
-    
-    if not lines:
-        return "No matching Thursdays found in the selected range."
-
     return "\n".join(lines)
 
 </py-script>
 
 <script>
 let last_output = "";
-const runButton = document.getElementById("runButton");
-const downloadButton = document.getElementById("downloadButton");
 
-// 1. Wait for the 'py-ready' event which fires when PyScript is fully loaded
-document.addEventListener("py-ready", () => {
-    // 2. Attach the click handler to the button *after* PyScript is ready
-    runButton.onclick = async function run_calc() {
-        // Since we are inside 'py-ready', 'pyscript' is guaranteed to be defined
-        
-        // This wait is still good practice for robustness
-        await pyscript.ready; 
+// The run_calc function is now able to access 'pyscript' because the core.js script
+// has completed execution due to the 'defer' attribute.
+async function run_calc() {
+    // wait for interpreter to be fully ready
+    await pyscript.ready;
 
-        const day = parseInt(document.getElementById("dayInput").value);
-        const mode = document.querySelector('input[name="cal"]:checked').value;
-        const filter = document.getElementById("monthFilter").value;
+    const day = parseInt(document.getElementById("dayInput").value);
+    const mode = document.querySelector('input[name="cal"]:checked').value;
+    const filter = document.getElementById("monthFilter").value;
 
-        const box = document.getElementById("output");
-        box.textContent = "Processing...";
+    const box = document.getElementById("output");
+    box.textContent = "Processing...";
 
-        try {
-            // Get the Python interpreter
-            const py = pyscript.interpreter;
+    // get the python interpreter
+    const py = pyscript.interpreter;
 
-            // Get Python function
-            const compute_fn = py.globals.get("compute");
+    // get Python function by name from global scope
+    const compute_fn = py.globals.get("compute");
 
-            // Execute Python function
-            const result = compute_fn(day, mode, filter);
+    // execute Python function
+    const result = compute_fn(day, mode, filter);
 
-            last_output = result;
-            box.textContent = result;
-        } catch (error) {
-            box.textContent = `An error occurred: ${error.message}`;
-            console.error(error);
-        }
-    }
+    last_output = result;
+    box.textContent = result;
+}
 
-    // Attach the download handler (no PyScript dependency)
-    downloadButton.onclick = function download_results() {
-        if (!last_output) return;
+function download_results() {
+    if (!last_output) return;
 
-        const blob = new Blob([last_output], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
+    const blob = new Blob([last_output], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
 
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "thursday_results.txt";
-        a.click();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "thursday_results.txt";
+    a.click();
 
-        URL.revokeObjectURL(url);
-    }
-
-    // Set the button text back to normal once ready
-    runButton.textContent = "Find Thursdays";
-});
-
-// Optional: Inform the user that PyScript is loading
-runButton.textContent = "Loading...";
-runButton.disabled = true;
-
-// Re-enable button when ready
-document.addEventListener("py-ready", () => {
-    runButton.disabled = false;
-});
-
+    URL.revokeObjectURL(url);
+}
 </script>
 
 </body>
