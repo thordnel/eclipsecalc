@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Thursday Finder</title>
 
-<link rel="stylesheet" href="https://pyscript.net/releases/2024.2.1/core.css">
-<script defer src="https://pyscript.net/releases/2024.2.1/core.js"></script>
+<!-- PyScript CSS and JS (2022.12.1 version) -->
+<link rel="stylesheet" href="https://pyscript.net/releases/2022.12.1/pyscript.css">
+<script defer src="https://pyscript.net/releases/2022.12.1/pyscript.js"></script>
 
 <style>
 body { font-family: serif; max-width: 720px; margin: auto; padding: 20px; }
@@ -33,14 +34,14 @@ input, button { padding: 6px; font-size: 16px; }
 
 <br><br>
 
-<button onclick="run_calc()">Find Thursdays</button>
-<button onclick="download_results()">Download</button>
+<button id="findBtn">Find Thursdays</button>
+<button id="downloadBtn">Download</button>
 
 <h3>Results</h3>
 <div id="output"></div>
 
+<!-- PyScript code -->
 <py-script>
-
 from datetime import datetime, timedelta
 from collections import defaultdict
 
@@ -48,11 +49,10 @@ def find_thursday_months(target_day, filter_months):
     years = range(1870, 1924)
     months = range(1, 13)
     out = defaultdict(list)
-
     for y in years:
         for m in months:
             try:
-                if datetime(y, m, target_day).weekday() == 3: # 3 is Thursday
+                if datetime(y, m, target_day).weekday() == 3:
                     if not filter_months or m in filter_months:
                         out[y].append(m)
             except:
@@ -60,15 +60,7 @@ def find_thursday_months(target_day, filter_months):
     return out
 
 def julian_to_gregorian(jy, jm, jd):
-    # Gregorian calendar was 12 days ahead of Julian in 1870-1899
-    # and 13 days ahead in 1900-1923
-    if 1870 <= jy <= 1899:
-        offset = 12
-    elif 1900 <= jy <= 1923:
-        offset = 13
-    else:
-        return None, None, None
-
+    offset = 12 if 1870 <= jy <= 1899 else 13
     try:
         dt = datetime(jy, jm, jd)
         dt2 = dt + timedelta(days=offset)
@@ -80,19 +72,13 @@ def find_thursday_months_julian(target_day, filter_months):
     years = range(1870, 1924)
     months = range(1, 13)
     out = defaultdict(list)
-
     for y in years:
         for m in months:
-            # Convert Julian date to its equivalent Gregorian date
             gy, gm, gd = julian_to_gregorian(y, m, target_day)
-            
             if gd is None:
                 continue
-            
-            # Check if the *Gregorian equivalent* falls on a Thursday
             if datetime(gy, gm, gd).weekday() == 3:
                 if not filter_months or m in filter_months:
-                    # Store the result using the Julian calendar's year and month
                     out[y].append(m)
     return out
 
@@ -103,63 +89,56 @@ def compute(day, mode, filter_str):
             f = [int(x.strip()) for x in filter_str.split(",") if x.strip()]
         except:
             return "Invalid filter."
-
-    if mode == "greg":
-        res = find_thursday_months(day, f)
-    else:
-        res = find_thursday_months_julian(day, f)
-
+    res = find_thursday_months(day, f) if mode == "greg" else find_thursday_months_julian(day, f)
     lines = []
     for year in sorted(res.keys()):
-        # Get month names for display
         names = [datetime(year, m, 1).strftime("%B") for m in res[year]]
         lines.append(f"{year}: {day} {', '.join(names)}")
     return "\n".join(lines)
-
 </py-script>
 
+<!-- JS for Find and Download -->
 <script>
 let last_output = "";
 
-// The run_calc function is now able to access 'pyscript' because the core.js script
-// has completed execution due to the 'defer' attribute.
 async function run_calc() {
-    // wait for interpreter to be fully ready
-    await pyscript.ready;
+    if (typeof pyscript === "undefined") {
+        console.error("PyScript not loaded yet");
+        return;
+    }
+
+    await pyscript.ready; // ensure PyScript is fully initialized
 
     const day = parseInt(document.getElementById("dayInput").value);
     const mode = document.querySelector('input[name="cal"]:checked').value;
     const filter = document.getElementById("monthFilter").value;
-
     const box = document.getElementById("output");
     box.textContent = "Processing...";
 
-    // get the python interpreter
-    const py = pyscript.interpreter;
-
-    // get Python function by name from global scope
-    const compute_fn = py.globals.get("compute");
-
-    // execute Python function
-    const result = compute_fn(day, mode, filter);
-
-    last_output = result;
-    box.textContent = result;
+    try {
+        const result = await pyodide.runPythonAsync(`compute(${day}, "${mode}", """${filter}""")`);
+        last_output = result;
+        box.textContent = result;
+    } catch (err) {
+        box.textContent = "Error: " + err;
+    }
 }
 
 function download_results() {
     if (!last_output) return;
-
     const blob = new Blob([last_output], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
     a.download = "thursday_results.txt";
     a.click();
-
     URL.revokeObjectURL(url);
 }
+
+window.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("findBtn").addEventListener("click", run_calc);
+    document.getElementById("downloadBtn").addEventListener("click", download_results);
+});
 </script>
 
 </body>
