@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Thursday Finder</title>
 
-<!-- PyScript CSS and JS (2022.12.1 version) -->
 <link rel="stylesheet" href="https://pyscript.net/releases/2022.12.1/pyscript.css">
 <script defer src="https://pyscript.net/releases/2022.12.1/pyscript.js"></script>
 
@@ -40,10 +39,11 @@ input, button { padding: 6px; font-size: 16px; }
 <h3>Results</h3>
 <div id="output"></div>
 
-<!-- PyScript code -->
 <py-script>
 from datetime import datetime, timedelta
 from collections import defaultdict
+from js import document
+from pyodide.ffi import create_proxy
 
 def find_thursday_months(target_day, filter_months):
     years = range(1870, 1924)
@@ -95,38 +95,25 @@ def compute(day, mode, filter_str):
         names = [datetime(year, m, 1).strftime("%B") for m in res[year]]
         lines.append(f"{year}: {day} {', '.join(names)}")
     return "\n".join(lines)
+
+def run_calc(ev=None):
+    day = int(document.getElementById("dayInput").value)
+    mode = document.querySelector('input[name="cal"]:checked').value
+    filter_str = document.getElementById("monthFilter").value
+    result = compute(day, mode, filter_str)
+    document.getElementById("output").textContent = result
+    # store last output for download
+    window.last_output = result
+
+# create persistent proxy to avoid proxy garbage collection
+run_calc_proxy = create_proxy(run_calc)
+document.getElementById("findBtn").addEventListener("click", run_calc_proxy)
 </py-script>
 
-<!-- JS for Find and Download -->
 <script>
-let last_output = "";
-
-async function run_calc() {
-    if (typeof pyscript === "undefined") {
-        console.error("PyScript not loaded yet");
-        return;
-    }
-
-    await pyscript.ready; // ensure PyScript is fully initialized
-
-    const day = parseInt(document.getElementById("dayInput").value);
-    const mode = document.querySelector('input[name="cal"]:checked').value;
-    const filter = document.getElementById("monthFilter").value;
-    const box = document.getElementById("output");
-    box.textContent = "Processing...";
-
-    try {
-        const result = await pyodide.runPythonAsync(`compute(${day}, "${mode}", """${filter}""")`);
-        last_output = result;
-        box.textContent = result;
-    } catch (err) {
-        box.textContent = "Error: " + err;
-    }
-}
-
 function download_results() {
-    if (!last_output) return;
-    const blob = new Blob([last_output], { type: "text/plain" });
+    if (!window.last_output) return;
+    const blob = new Blob([window.last_output], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -135,10 +122,7 @@ function download_results() {
     URL.revokeObjectURL(url);
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("findBtn").addEventListener("click", run_calc);
-    document.getElementById("downloadBtn").addEventListener("click", download_results);
-});
+document.getElementById("downloadBtn").addEventListener("click", download_results);
 </script>
 
 </body>
