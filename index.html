@@ -4,53 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Python Terminal on GitHub Pages</title>
-    
-    <!-- Load modern PyScript CSS and JS files from their public CDN -->
-    <!-- These links MUST start with https:// to be treated as internet addresses -->
-    <link rel="stylesheet" href="pyscript.net" />
-    <script defer src="pyscript.net"></script>
+
+    <!-- Correct PyScript CDN links -->
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
 
     <style>
         body {
-            background-color: #000; /* Black background */
-            color: #00FF00; /* Green text */
-            font-family: 'Consolas', 'Monaco', monospace; /* Monospace font */
+            background-color: #000;
+            color: #00FF00;
+            font-family: Consolas, Monaco, monospace;
             margin: 0;
             padding: 20px;
-            overflow: hidden; 
+            overflow: hidden;
         }
-
-        h1, p {
-            color: #DDD; /* Lighter color for non-terminal text */
-        }
-
-        /* Target the terminal container created by PyScript (now a custom element) */
+        h1, p { color: #DDD; }
         py-terminal {
             background-color: #000;
-            border: 2px solid #00FF00; /* Green border */
+            border: 2px solid #00FF00;
             min-height: 500px;
             width: 90%;
             margin-top: 20px;
             padding: 5px;
-            display: block; 
+            display: block;
         }
     </style>
 
-    <!-- 
-      *** CRITICAL WORKAROUND FOR GITHUB PAGES ***
-      This script from unpkg.com sets Cross-Origin security headers needed for PyScript web workers.
-      This link MUST start with https://
-    -->
-    <script src="unpkg.com"></script>
-
+    <!-- GitHub Pages worker CORS workaround -->
+    <script src="https://unpkg.com/pyscript/lib-worker-hack"></script>
 </head>
 <body>
 
     <h1>Web-Based Python REPL (Modern PyScript)</h1>
-    <p>This is a live Python environment running in your browser via PyScript/Pyodide. The workaround script helps enable worker mode on static hosts.</p>
-    
-    <!-- Use the modern <py-terminal> element with the 'worker' attribute -->
+    <p>This is a live Python environment running in your browser.</p>
+
     <py-terminal worker></py-terminal>
-    
+
 </body>
 </html>
