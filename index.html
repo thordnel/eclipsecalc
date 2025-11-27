@@ -39,7 +39,7 @@ input, button { padding: 6px; font-size: 16px; }
 <h3>Results</h3>
 <div id="output"></div>
 
-<!-- Python -->
+<!-- Python logic -->
 <py-script>
 
 from datetime import datetime, timedelta
@@ -67,9 +67,11 @@ def julian_to_gregorian(jy, jm, jd):
         offset = 13
     else:
         return None, None, None
+
     try:
         dt = datetime(jy, jm, jd)
-        return (dt + timedelta(days=offset)).year, (dt + timedelta(days=offset)).month, (dt + timedelta(days=offset)).day
+        dt2 = dt + timedelta(days=offset)
+        return dt2.year, dt2.month, dt2.day
     except:
         return None, None, None
 
@@ -112,8 +114,10 @@ def compute(day, mode, filter_str):
 <script>
 let last_output = "";
 
+// FULLY CORRECT API FOR PYSCRIPT 2024
 async function run_calc() {
-    await pyscript.ready;   // Wait until PyScript is initialized
+    // wait for interpreter
+    await pyscript.ready;
 
     const day = parseInt(document.getElementById("dayInput").value);
     const mode = document.querySelector('input[name="cal"]:checked').value;
@@ -122,12 +126,14 @@ async function run_calc() {
     const box = document.getElementById("output");
     box.textContent = "Processing...";
 
-    // Get the interpreter instance
+    // get the python interpreter
     const py = pyscript.interpreter;
 
-    // Call Python function
-    let compute_fn = py.globals.get("compute");
-    let result = compute_fn(day, mode, filter);
+    // get Python function
+    const compute_fn = py.globals.get("compute");
+
+    // execute Python function
+    const result = compute_fn(day, mode, filter);
 
     last_output = result;
     box.textContent = result;
@@ -147,8 +153,6 @@ function download_results() {
     URL.revokeObjectURL(url);
 }
 </script>
-
-
 
 </body>
 </html>
