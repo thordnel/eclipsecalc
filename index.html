@@ -11,8 +11,8 @@
 <style>
 /* Body & Layout */
 body {
-    font-family: 'Georgia', serif;
-    background-color: #f7f7f7;
+    font-family: 'Helvetica', serif;
+    background: linear-gradient(135deg, #f0f4ff, #e6f0ff);
     color: #333;
     margin: 0;
     padding: 40px 20px;
@@ -20,78 +20,49 @@ body {
     justify-content: center;
 }
 
+/* Card container */
 .container {
-    background-color: #fff;
+    background: linear-gradient(145deg, #ffffff, #f9fbff);
     max-width: 720px;
     width: 100%;
     padding: 30px 40px;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    transition: 0.3s ease;
+}
+
+.container:hover {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
 }
 
 /* Headings */
 h2 {
     text-align: center;
     margin-bottom: 30px;
-    font-weight: 600;
+    font-weight: 700;
+    background: linear-gradient(90deg, #4A90E2, #4AD991);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
-/* Inputs & Buttons */
+/* Inputs */
 input[type="number"],
 input[type="text"] {
     width: 100%;
-    padding: 10px 12px;
+    padding: 12px 14px;
     margin-top: 6px;
     margin-bottom: 20px;
     border: 1px solid #ccc;
-    border-radius: 8px;
+    border-radius: 12px;
     font-size: 16px;
     font-family: sans-serif;
-    box-sizing: border-box;
-}
-
-label {
-    font-weight: 500;
-}
-
-button {
-    padding: 10px 18px;
-    font-size: 16px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-right: 10px;
     transition: 0.2s;
 }
 
-button#findBtn {
-    background-color: #4A90E2;
-    color: white;
-}
-
-button#findBtn:hover {
-    background-color: #357ABD;
-}
-
-button#downloadBtn {
-    background-color: #E2A94A;
-    color: white;
-}
-
-button#downloadBtn:hover {
-    background-color: #BA7E35;
-}
-
-/* Results box */
-#output {
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 12px;
-    height: 280px;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    background-color: #fefefe;
-    font-family: monospace;
+input:focus {
+    border-color: #4A90E2;
+    box-shadow: 0 0 8px rgba(74,144,226,0.3);
+    outline: none;
 }
 
 /* Radio buttons inline */
@@ -100,8 +71,90 @@ button#downloadBtn:hover {
 }
 
 .radio-group label {
-    margin-right: 15px;
+    margin-right: 20px;
     font-weight: normal;
+    cursor: pointer;
+}
+
+/* Buttons */
+button {
+    padding: 12px 22px;
+    font-size: 16px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+}
+
+button#findBtn {
+    background: linear-gradient(135deg, #4A90E2, #357ABD);
+    color: white;
+}
+
+button#findBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+}
+
+button#downloadBtn {
+    background: linear-gradient(135deg, #E2A94A, #BA7E35);
+    color: white;
+}
+
+button#downloadBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+}
+
+/* Results box */
+#output {
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    padding: 14px;
+    height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    background-color: #fafcff;
+    font-family: monospace;
+    transition: 0.3s;
+}
+
+#output:hover {
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+    body {
+        padding: 20px 10px;
+    }
+
+    .container {
+        padding: 20px 15px;
+    }
+
+    input[type="number"],
+    input[type="text"] {
+        font-size: 15px;
+        padding: 10px;
+    }
+
+    button {
+        font-size: 15px;
+        padding: 10px;
+        width: 100%;
+        margin: 8px 0;
+    }
+
+    .radio-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .radio-group label {
+        margin-bottom: 8px;
+    }
 }
 </style>
 </head>
