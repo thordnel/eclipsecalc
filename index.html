@@ -246,7 +246,7 @@ from js import document, window
 from pyodide.ffi import create_proxy
 
 def find_thursday_months(target_day, filter_months, filter_years=None):
-    years = filter_years if filter_years else range(1870, 1924)
+    years = filter_years if filter_years else range(1870, 1933)
     months = range(1, 13)
     out = defaultdict(list)
     for y in years:
