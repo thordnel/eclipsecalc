@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Thursday Finder</title>
+<title>Same Day Finder</title>
 
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2c2c2c">
@@ -11,9 +11,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-
 <style>
-/* Body & Layout (same as original) */
+/* Body & Layout */
 *, *::before, *::after {
     box-sizing: border-box;
 }
@@ -29,8 +28,6 @@ body {
     min-height: 100vh;
 }
 
-
-
 /* Card container */
 .container {
     background: #3a3a3a;
@@ -40,10 +37,6 @@ body {
     border-radius: 16px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.25);
     transition: 0.3s ease;
-}
-
-.container:hover {
-    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
 }
 
 /* Headings */
@@ -63,9 +56,10 @@ h2 + h3 {
     color: #aaa;
 }
 
-/* Inputs */
+/* Inputs & Select */
 input[type="number"],
-input[type="text"] {
+input[type="text"],
+select {
     width: 100%;
     max-width: 100%;
     padding: 12px 14px;
@@ -82,7 +76,7 @@ input[type="text"] {
     appearance: none;
 }
 
-input:focus {
+input:focus, select:focus {
     border-color: #d48846;
     box-shadow: 0 0 8px rgba(212, 136, 70, 0.3);
     outline: none;
@@ -125,11 +119,6 @@ button#downloadBtn {
     color: white;
 }
 
-button#downloadBtn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 14px rgba(0,0,0,0.18);
-}
-
 /* Results box */
 #output {
     border: 1px solid #444;
@@ -141,65 +130,39 @@ button#downloadBtn:hover {
     background-color: #222;
     color: #ccc;
     font-family: monospace;
-    transition: 0.3s;
 }
 
-#output:hover {
-    box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
-}
-
-/* Mobile responsiveness */
-@media (max-width: 600px) {
-    body {
-        padding: 20px 10px;
-    }
-
-    .container {
-        padding: 20px 15px;
-    }
-
-    input[type="number"],
-    input[type="text"] {
-        font-size: 16px;
-        padding: 10px;
-    }
-
-    button {
-        font-size: 15px;
-        padding: 10px;
-        width: 100%;
-        margin: 8px 0;
-    }
-
-    .radio-group {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .radio-group label {
-        margin-bottom: 8px;
-    }
-}
-
-  .pyodide-credit {
+.pyodide-credit {
     text-align: center;
     font-size: 13px;
     color: #888;
     margin: 28px 0 8px;
-    line-height: 1.4;
-  }
-  .pyodide-credit a { color: #d48846; text-decoration: none; }
-  .pyodide-credit a:hover { text-decoration: underline; }
+}
+.pyodide-credit a { color: #d48846; text-decoration: none; }
 
+@media (max-width: 600px) {
+    button { width: 100%; margin: 8px 0; }
+}
 </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Thursday Date Finder</h2>
-    <h3>"Everyday is Thursday"</h3>
+    <h2>Same Day Finder</h2>
+    <h3>"Any day, any time"</h3>
 
-    <label>Day:</label>
+    <label>Target Weekday:</label>
+    <select id="weekdayInput">
+        <option value="0">Monday</option>
+        <option value="1">Tuesday</option>
+        <option value="2">Wednesday</option>
+        <option value="3" selected>Thursday</option>
+        <option value="4">Friday</option>
+        <option value="5">Saturday</option>
+        <option value="6">Sunday</option>
+    </select>
+
+    <label>Day of Month:</label>
     <input id="dayInput" type="number" min="1" max="31" value="24">
 
     <label>Filter months (comma-separated, optional):</label>
@@ -213,46 +176,36 @@ button#downloadBtn:hover {
         <label><input type="radio" name="cal" value="jul"> Julian</label>
     </div>
 
-    <button id="findBtn">Find Thursdays</button>
-    <button id="downloadBtn">Download</button>
+    <button id="findBtn">Find Dates</button>
+    <button id="downloadBtn">Download Results</button>
 
     <h3>Results</h3>
     <div id="output"></div>
     <footer class="pyodide-credit">
-  This site uses <a href="https://pyodide.org/" target="_blank" rel="noopener noreferrer">Pyodide</a> (<a href="https://github.com/pyodide/pyodide/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a>). 
-  Hosted from <a href="https://github.com/thordnel/eclipsecalc" target="_blank" rel="noopener noreferrer">this repository</a>. Thanks to the Pyodide maintainers and contributors.
-</footer>
+        This site uses <a href="https://pyodide.org/" target="_blank">Pyodide</a>.
+    </footer>
 </div>
 
-<!-- Load local pyodide loader. Put the full Pyodide build inside ./pyodide/ -->
 <script src="pyodide/pyodide.js"></script>
 <script>
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-    .then(reg => console.log('Service Worker registered', reg))
-    .catch(err => console.error('Service Worker registration failed', err));
-}
-</script>
-<script>
 async function main() {
-    // loadPyodide is provided by pyodide.js
     const pyodide = await loadPyodide({ indexURL: "./pyodide/" });
 
-    // Run the same Python code you had inside <py-script>.
     const pythonCode = `
 from datetime import datetime, timedelta
 from collections import defaultdict
 from js import document, window
 from pyodide.ffi import create_proxy
 
-def find_thursday_months(target_day, filter_months, filter_years=None):
+def find_matching_days(target_day, target_weekday, filter_months, filter_years=None):
     years = filter_years if filter_years else range(1870, 1933)
     months = range(1, 13)
     out = defaultdict(list)
     for y in years:
         for m in months:
             try:
-                if datetime(y, m, target_day).weekday() == 3:
+                # weekday() returns 0-6 (Mon-Sun)
+                if datetime(y, m, target_day).weekday() == target_weekday:
                     if not filter_months or m in filter_months:
                         out[y].append(m)
             except:
@@ -268,7 +221,7 @@ def julian_to_gregorian(jy, jm, jd):
     except:
         return None, None, None
 
-def find_thursday_months_julian(target_day, filter_months, filter_years=None):
+def find_matching_days_julian(target_day, target_weekday, filter_months, filter_years=None):
     years = filter_years if filter_years else range(1870, 1924)
     months = range(1, 13)
     out = defaultdict(list)
@@ -277,7 +230,7 @@ def find_thursday_months_julian(target_day, filter_months, filter_years=None):
             gy, gm, gd = julian_to_gregorian(y, m, target_day)
             if gd is None:
                 continue
-            if datetime(gy, gm, gd).weekday() == 3:
+            if datetime(gy, gm, gd).weekday() == target_weekday:
                 if not filter_months or m in filter_months:
                     out[y].append(m)
     return out
@@ -288,8 +241,7 @@ def parse_filter(s):
     res = set()
     for part in s.split(','):
         part = part.strip()
-        if not part:
-            continue
+        if not part: continue
         if '-' in part:
             start, end = map(int, part.split('-'))
             res.update(range(start, end + 1))
@@ -297,60 +249,58 @@ def parse_filter(s):
             res.add(int(part))
     return list(res)
 
-def compute(day, mode, month_filter_str, year_filter_str):
+def compute(day, weekday, mode, month_filter_str, year_filter_str):
     try:
         f_months = parse_filter(month_filter_str)
-    except:
-        return "Invalid month filter."
-    
-    try:
         f_years = parse_filter(year_filter_str)
     except:
-        return "Invalid year filter."
+        return "Invalid filters."
             
-    res = find_thursday_months(day, f_months, f_years) if mode == "greg" else find_thursday_months_julian(day, f_months, f_years)
+    if mode == "greg":
+        res = find_matching_days(day, weekday, f_months, f_years)
+    else:
+        res = find_matching_days_julian(day, weekday, f_months, f_years)
+        
     lines = []
+    weekday_name = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][weekday]
+    lines.append(f"Searching for {weekday_name} the {day}th:")
+    lines.append("-" * 30)
+    
     for year in sorted(res.keys()):
         names = [datetime(year, m, 1).strftime("%B") for m in res[year]]
         lines.append(f"{year}: {day} {', '.join(names)}")
-    return "\\n".join(lines)
+    
+    return "\\n".join(lines) if len(lines) > 2 else "No matches found."
 
 def run_calc(ev=None):
     day = int(document.getElementById("dayInput").value)
+    weekday = int(document.getElementById("weekdayInput").value)
     mode = document.querySelector('input[name="cal"]:checked').value
     month_filter_str = document.getElementById("monthFilter").value
     year_filter_str = document.getElementById("yearFilter").value
-    result = compute(day, mode, month_filter_str, year_filter_str)
+    
+    result = compute(day, weekday, mode, month_filter_str, year_filter_str)
     document.getElementById("output").textContent = result
     window.last_output = result
 
-# Wire up the button inside Python (we create a JS proxy for run_calc)
 run_calc_proxy = create_proxy(run_calc)
 document.getElementById("findBtn").addEventListener("click", run_calc_proxy)
-
-# Run once to populate results on load
 run_calc()
 `;
-    // Run async
     await pyodide.runPythonAsync(pythonCode);
 
-    // Make a small JS helper for downloading results (same as original)
     document.getElementById("downloadBtn").addEventListener("click", function () {
         if (!window.last_output) return;
         const blob = new Blob([window.last_output], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "thursday_results.txt";
+        a.download = "date_finder_results.txt";
         a.click();
         URL.revokeObjectURL(url);
     });
 }
-
-main().catch(err => {
-    console.error("Failed to initialize Pyodide:", err);
-    document.getElementById("output").textContent = "Failed to initialize Pyodide: " + err;
-});
+main().catch(err => console.error(err));
 </script>
 
 </body>
